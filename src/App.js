@@ -1,5 +1,7 @@
 import React from "react";
 
+import { useForm } from "react-hook-form";
+
 import {
   GoogleMap,
   useLoadScript,
@@ -52,6 +54,7 @@ const center = {
 
 localStorage.setItem('busStopCount', 0); // böyle bir değişken tutuyorum ve 0'dan başlatıyorum. her eklendiğinde 1 artıracağım.
 localStorage.setItem('maxBusStop', 0); // otobüs sayısı için
+localStorage.setItem('optimalityDegree', 0); // otobüs sayısı için
 
 export default function App() {
   const { isLoaded, loadError } = useLoadScript({
@@ -61,14 +64,6 @@ export default function App() {
 
   const [markers, setMarkers] = React.useState([]);
   const [selected, setSelected] = React.useState(null);
-  // const [state, setState] = React.useState({ // böyle bir şey ekledim ama henüz kullanmadım. işe yarıyor mu onu da bilmiyorum
-  //   busStopLocations: [{
-  //     stopNumber: 0,
-  //     latitude: 0,
-  //     longitude: 0,
-  //     studentCount: 0,
-  //   }],
-  // });
 
   const onMapClick = React.useCallback((e) => {
     localStorage.setItem('busStopCount', parseInt(localStorage.getItem('busStopCount'), 10) + 1); // her durak eklemesinde 1 artıtıyorum
@@ -83,10 +78,6 @@ export default function App() {
     ]);
   }, []);
 
-  const onFormSubmit = React.useCallback((value) => {
-    localStorage.setItem('maxBusStop', value); // her durak eklemesinde 1 artıtıyorum
-  }, []);
-
   const mapRef = React.useRef();
   const onMapLoad = React.useCallback((map) => {
     mapRef.current = map;
@@ -99,18 +90,6 @@ export default function App() {
 
   if (loadError) return "Error";
   if (!isLoaded) return "Loading...";
-
-  // const handleInputChange = (event) => { // bunu formlar için eklemiştim ama henüz kullanamadım.
-  //   setState((prevProps) => ({
-  //     ...prevProps,
-  //     [event.target.name]: event.target.value
-  //   }));
-  // };
-
-  // const handleSubmit = (event) => {
-  //   event.preventDefault();
-  //   console.log(state);
-  // };
 
   return (
     <div>
@@ -176,7 +155,7 @@ function Routerella() {
     <div>
       <img src = { routerella } 
         alt = "routerella" 
-        class = "center"
+        className = "center"
         height = { 100 }
         width = { 300 } />
     </div>
@@ -205,56 +184,70 @@ function InformationBox({ isSchool }) {
 
 // bu formu da okul için öğrenci sayısı istemesin diye koydum
 function StudentNumberForm({ isSchool }) {
-  const onFormSubmit2 = React.useCallback((value) => {
-    localStorage.setItem('maxBusStop', value);  // her durak eklemesinde 1 artıtıyorum
-  }, []);
+  // const onFormSubmit2 = React.useCallback((value) => {
+  //   localStorage.setItem('maxBusStop', value); // her durak eklemesinde 1 artıtıyorum
+  // }, []);
+
+  const { register, handleSubmit } = useForm();
+
+  const onSubmit = (data) => {
+    console.log(data);
+  };
 
   if (isSchool) {
     return null;
   }
   return (
-    <form onSubmit={onFormSubmit2}>
+    <form onSubmit={handleSubmit(onSubmit)}>
       <div className="form-control">
         <label>Student Number</label>
           <input
           type="number"
-          name="studentNumber"/>
+          name="studentNumber"
+          ref={register}/>
       </div>
       <div className="form-control">
+      <label></label>
       <button type="submit">OK</button>
       </div>
     </form>
+    // <div className="App">
+    //   <form onSubmit={handleSubmit(onSubmit)}>
+    //     <div className="form-control">
+    //       <label>Email</label>
+    //       <input type="text" name="email" ref={register} />
+    //     </div>
+    //     <div className="form-control">
+    //       <label>Password</label>
+    //       <input type="password" name="password" ref={register} />
+    //     </div>
+    //     <div className="form-control">
+    //       <label></label>
+    //       <button type="submit">Login</button>
+    //     </div>
+    //   </form>
+    // </div>
   );
 }
 
 // bu da otobüs sayısını alabilmek için ama çalışmıyor henüz :/
 function BusNumberForm() {
-  const [state, setState] = React.useState({
-    busNumber: 0,
-  });
+  const { register, handleSubmit } = useForm();
 
-  const handleInputChange = (event) => {
-    setState((prevProps) => ({
-      ...prevProps,
-      [event.target.name]: event.target.value
-    }));
+  const onSubmit = (data) => {
+    console.log(data);
+    localStorage.setItem('maxBusStop', data.busNumber); // her durak eklemesinde 1 artıtıyorum
   };
 
-  const handleSubmit = (event) => {
-    event.preventDefault();
-    console.log(state);
-  };
-  
   return (
     <div> 
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handleSubmit(onSubmit)}>
         <div className="form-control">
         <label>Enter the maximum number of buses: </label>
           <input
             type="number" // sadece sayı değeri girilebilmesi için böyle bir şey ekledim
             name="busNumber"
-            value={state.busNumber}
-            onChange={handleInputChange}
+            ref={register}
           />
           <button type="submit"> OK </button>
         </div>
@@ -265,37 +258,27 @@ function BusNumberForm() {
 
 // bu da optimallik seviyesi için. bunu aslında 0'dan başlayıp yukarı çıkan şekilde değilde 3 farklı kutucuk gibi olsa daha iyi olur gibi sanki
 function OptimalityForm() {
-  const [state, setState] = React.useState({
-    optimality: 0,
-  });
+  const { register, handleSubmit } = useForm();
 
-  const handleInputChange = (event) => {
-    setState((prevProps) => ({
-      ...prevProps,
-      [event.target.name]: event.target.value
-    }));
+  const onSubmit = (data) => {
+    console.log(data);
+    localStorage.setItem('optimalityDegree', data.optimalityDegree); // her durak eklemesinde 1 artıtıyorum
   };
 
-  const handleSubmit = (event) => {
-    event.preventDefault();
-    console.log(state);
-  };
-  
   return (
     <div> 
-      <form onSubmit={handleSubmit}>
-        <div className="form-control">
-        <label>Enter the optimality level (Note: This may affect the calculation time!): </label>
-          <input
-            type="number"
-            name="busNumber"
-            value={state.optimality}
-            onChange={handleInputChange}
-          />
-          <button type="submit"> OK </button>
-        </div>
-      </form>
-   </div>
+    <form onSubmit={handleSubmit(onSubmit)}>
+      <div className="form-control">
+      <label>Enter the optimality level (Note: This may affect the calculation time!): </label>
+        <input
+          type="number"
+          name="optimalityDegree"
+          ref={register}
+        />
+        <button type="submit"> OK </button>
+      </div>
+    </form>
+    </div>
   );
 }
 
