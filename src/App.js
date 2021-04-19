@@ -206,7 +206,7 @@ function InformationBox({ isSchool }) {
 // bu formu da okul için öğrenci sayısı istemesin diye koydum
 function StudentNumberForm({ isSchool }) {
   const onFormSubmit2 = React.useCallback((value) => {
-    localStorage.setItem('maxBusStop', value); // her durak eklemesinde 1 artıtıyorum
+    localStorage.setItem('maxBusStop', value);  // her durak eklemesinde 1 artıtıyorum
   }, []);
 
   if (isSchool) {
