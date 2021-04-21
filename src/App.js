@@ -22,9 +22,10 @@ import {
   ComboboxOption,
 } from "@reach/combobox";
 
-import { formatRelative } from "date-fns";
 import "@reach/combobox/styles.css";
 import mapStyles from "./mapStyles";
+
+import axios from "axios";
 
 // ------------- images -----------------
 import routerella from "./images/routerella3.png"
@@ -36,7 +37,7 @@ import busStopIconForMap from "./images/bus_stop.jpeg"
 const libraries = ["places"];
 
 const mapContainerStyle = {
-  height: "80vh",
+  height: "78vh",
   width: "100vw",
 };
 
@@ -53,8 +54,8 @@ const center = {
 //-----------------------------------------------------------------
 
 localStorage.setItem('busStopCount', 0); // böyle bir değişken tutuyorum ve 0'dan başlatıyorum. her eklendiğinde 1 artıracağım.
-localStorage.setItem('maxBusStop', 0); // otobüs sayısı için
-localStorage.setItem('optimalityDegree', 0); // optimallik seviyesi için
+localStorage.setItem('maxBusStop', 1); // otobüs sayısı için - default 1
+localStorage.setItem('optimalityDegree', 1); // optimallik seviyesi için - default 1
 
 export default function App() {
   const { isLoaded, loadError } = useLoadScript({
@@ -74,7 +75,6 @@ export default function App() {
         lat: e.latLng.lat(),
         lng: e.latLng.lng(),
         studentNum: 0,
-        time: new Date(),
       },
     ]);
   }, []);
@@ -84,7 +84,7 @@ export default function App() {
     mapRef.current = map;
   }, []);
 
-  const panTo = React.useCallback(({ lat, lng, busStopCount }) => {
+  const panTo = React.useCallback(({ lat, lng }) => {
     mapRef.current.panTo({ lat, lng });
     mapRef.current.setZoom(20);
   }, []);
@@ -94,10 +94,13 @@ export default function App() {
 
   const handleClick = () => {  //en son istek atmak için buton click ile json da toparlıyorum tüm inputları
     let request = (
-      JSON.stringify([{ 'busStopCount': localStorage.getItem('busStopCount') }])
-      + JSON.stringify([{ 'maxBusStop': localStorage.getItem('maxBusStop') }])
-      + JSON.stringify([{ 'optimalityDegree': localStorage.getItem('optimalityDegree') }])
-      + JSON.stringify(markers));
+      JSON.stringify({
+        busStopCount: localStorage.getItem('busStopCount'),
+        maxBusStop: localStorage.getItem('maxBusStop'),
+        optimalityDegree: localStorage.getItem('optimalityDegree'),
+        locations: markers,
+      })
+    );
     console.log(request); //şimdilik console da yazıyor
   };
   
@@ -136,11 +139,11 @@ export default function App() {
           >
             <div>
               <InformationBox isSchool = {selected.num === 1}/>
-              <p>Added on: {formatRelative(selected.time, new Date())}</p>
               {/* virgülden sonraki 3 basamak için toFixed kullandım */}
               <p>Latitude: {selected.lat.toFixed(3)}</p>
               <p>Longitude: {selected.lng.toFixed(3)}</p>
               <p>Number: {selected.num}</p>
+              <p>Student Number: {selected.studentNum}</p>
 
               {/* student sayısını alıp eklemek için selected marker da parametre verdim*/}
               <StudentNumberForm isSchool = {selected.num === 1} selected = {selected}/> 
@@ -226,7 +229,6 @@ function BusNumberForm() {
   const { register, handleSubmit } = useForm();
 
   const onSubmit = (data) => {
-    console.log(data);
     localStorage.setItem('maxBusStop', data.busNumber);
   };
 
@@ -252,7 +254,6 @@ function OptimalityForm() {
   const { register, handleSubmit } = useForm();
 
   const onSubmit = (data) => {
-    console.log(data);
     localStorage.setItem('optimalityDegree', data.optimalityDegree);
   };
 
@@ -319,8 +320,7 @@ function Search({ panTo }) {
     try {
       const results = await getGeocode({ address });
       const { lat, lng } = await getLatLng(results[0]);
-      const busStopCount = localStorage.getItem('busStopCount');
-      panTo({ lat, lng, busStopCount });
+      panTo({ lat, lng  });
     } catch (error) {
       console.log("😱 Error: ", error);
     }
