@@ -54,7 +54,7 @@ const center = {
 
 localStorage.setItem('busStopCount', 0); // böyle bir değişken tutuyorum ve 0'dan başlatıyorum. her eklendiğinde 1 artıracağım.
 localStorage.setItem('maxBusStop', 0); // otobüs sayısı için
-localStorage.setItem('optimalityDegree', 0); // otobüs sayısı için
+localStorage.setItem('optimalityDegree', 0); // optimallik seviyesi için
 
 export default function App() {
   const { isLoaded, loadError } = useLoadScript({
@@ -66,14 +66,14 @@ export default function App() {
   const [selected, setSelected] = React.useState(null);
 
   const onMapClick = React.useCallback((e) => {
-    localStorage.setItem('busStopCount', parseInt(localStorage.getItem('busStopCount'), 10) + 1); // her durak eklemesinde 1 artıtıyorum
+    localStorage.setItem('busStopCount', parseInt(localStorage.getItem('busStopCount'), 10) + 1); // her durak eklemesinde 1 artırıyorum
     setMarkers((current) => [
       ...current,
       {
         num: parseInt(localStorage.getItem('busStopCount')),
         lat: e.latLng.lat(),
         lng: e.latLng.lng(),
-        studentNum:0,
+        studentNum: 0,
         time: new Date(),
       },
     ]);
@@ -92,8 +92,12 @@ export default function App() {
   if (loadError) return "Error";
   if (!isLoaded) return "Loading...";
 
-  const handleClick = (event) => {  //en son istek atmak için buton click ile json da toparlıyorum tüm inputları
-    let request=(JSON.stringify([{'busStopCount':localStorage.getItem('busStopCount')}])+JSON.stringify([{'maxBusStop':localStorage.getItem('maxBusStop')}])+JSON.stringify([{'optimalityDegree':localStorage.getItem('optimalityDegree')}])+JSON.stringify(markers));
+  const handleClick = () => {  //en son istek atmak için buton click ile json da toparlıyorum tüm inputları
+    let request = (
+      JSON.stringify([{ 'busStopCount': localStorage.getItem('busStopCount') }])
+      + JSON.stringify([{ 'maxBusStop': localStorage.getItem('maxBusStop') }])
+      + JSON.stringify([{ 'optimalityDegree': localStorage.getItem('optimalityDegree') }])
+      + JSON.stringify(markers));
     console.log(request); //şimdilik console da yazıyor
   };
   
@@ -138,20 +142,18 @@ export default function App() {
               <p>Longitude: {selected.lng.toFixed(3)}</p>
               <p>Number: {selected.num}</p>
 
-              {/* öğrenci sayısını alabilmek için açtım bu formu. email falan kopyala yapıştırdan geldi muhtemelen */}
               {/* student sayısını alıp eklemek için selected marker da parametre verdim*/}
-              <StudentNumberForm isSchool = {selected.num === 1} selected={selected}/> 
+              <StudentNumberForm isSchool = {selected.num === 1} selected = {selected}/> 
 
             </div>
           </InfoWindow>
         ) : null}
       </GoogleMap>
 
-      {/* // yine daha temiz görünsün diye bu formları da böyle gösterdim. ama bu ikisi de henüz işlevini yerine getiremiyor */}
       <BusNumberForm/>
 
       <OptimalityForm/>
-      <button onClick={handleClick}>RUN!</button>
+      <button onClick = {handleClick}> RUN! </button>
     </div>
   );
 }
@@ -190,17 +192,13 @@ function InformationBox({ isSchool }) {
   );
 }
 
-// bu formu da okul için öğrenci sayısı istemesin diye koydum
-function StudentNumberForm({ isSchool }) {
-  // const onFormSubmit2 = React.useCallback((value) => {
-  //   localStorage.setItem('maxBusStop', value); // her durak eklemesinde 1 artıtıyorum
-  // }, []);
-
+// bu formu da okul için öğrenci sayısı istemesin diye koydum 
+// --- şuraya selected'ı ekledim. yoksa kızıyordu bende
+function StudentNumberForm({ isSchool, selected }) {
   const { register, handleSubmit } = useForm();
 
   const onSubmit = (data) => {
-    selected.studentNum=parseInt(data.studentNumber);
-    //console.log(data);
+    selected.studentNum = parseInt(data.studentNumber);
   };
 
   if (isSchool) {
@@ -220,32 +218,16 @@ function StudentNumberForm({ isSchool }) {
       <button type="submit">OK</button>
       </div>
     </form>
-    // <div className="App">
-    //   <form onSubmit={handleSubmit(onSubmit)}>
-    //     <div className="form-control">
-    //       <label>Email</label>
-    //       <input type="text" name="email" ref={register} />
-    //     </div>
-    //     <div className="form-control">
-    //       <label>Password</label>
-    //       <input type="password" name="password" ref={register} />
-    //     </div>
-    //     <div className="form-control">
-    //       <label></label>
-    //       <button type="submit">Login</button>
-    //     </div>
-    //   </form>
-    // </div>
   );
 }
 
-// bu da otobüs sayısını alabilmek için ama çalışmıyor henüz :/
+// bu da otobüs sayısını alabilmek için
 function BusNumberForm() {
   const { register, handleSubmit } = useForm();
 
   const onSubmit = (data) => {
     console.log(data);
-    localStorage.setItem('maxBusStop', data.busNumber); // her durak eklemesinde 1 artıtıyorum
+    localStorage.setItem('maxBusStop', data.busNumber);
   };
 
   return (
@@ -271,7 +253,7 @@ function OptimalityForm() {
 
   const onSubmit = (data) => {
     console.log(data);
-    localStorage.setItem('optimalityDegree', data.optimalityDegree); // her durak eklemesinde 1 artıtıyorum
+    localStorage.setItem('optimalityDegree', data.optimalityDegree);
   };
 
   return (
