@@ -73,6 +73,7 @@ export default function App() {
         num: parseInt(localStorage.getItem('busStopCount')),
         lat: e.latLng.lat(),
         lng: e.latLng.lng(),
+        studentNum:0,
         time: new Date(),
       },
     ]);
@@ -91,6 +92,11 @@ export default function App() {
   if (loadError) return "Error";
   if (!isLoaded) return "Loading...";
 
+  const handleClick = (event) => {  //en son istek atmak için buton click ile json da toparlıyorum tüm inputları
+    let request=(JSON.stringify([{'busStopCount':localStorage.getItem('busStopCount')}])+JSON.stringify([{'maxBusStop':localStorage.getItem('maxBusStop')}])+JSON.stringify([{'optimalityDegree':localStorage.getItem('optimalityDegree')}])+JSON.stringify(markers));
+    console.log(request); //şimdilik console da yazıyor
+  };
+  
   return (
     <div>
       {/* // bu şekilde fonksiyon çağırmış oluyorum. daha temiz görünüyor */}
@@ -133,7 +139,8 @@ export default function App() {
               <p>Number: {selected.num}</p>
 
               {/* öğrenci sayısını alabilmek için açtım bu formu. email falan kopyala yapıştırdan geldi muhtemelen */}
-              <StudentNumberForm isSchool = {selected.num === 1}/>
+              {/* student sayısını alıp eklemek için selected marker da parametre verdim*/}
+              <StudentNumberForm isSchool = {selected.num === 1} selected={selected}/> 
 
             </div>
           </InfoWindow>
@@ -144,6 +151,7 @@ export default function App() {
       <BusNumberForm/>
 
       <OptimalityForm/>
+      <button onClick={handleClick}>RUN!</button>
     </div>
   );
 }
@@ -191,7 +199,8 @@ function StudentNumberForm({ isSchool }) {
   const { register, handleSubmit } = useForm();
 
   const onSubmit = (data) => {
-    console.log(data);
+    selected.studentNum=parseInt(data.studentNumber);
+    //console.log(data);
   };
 
   if (isSchool) {
