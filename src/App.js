@@ -1,4 +1,5 @@
 import React from "react";
+import axios from "axios";
 
 import { useForm } from "react-hook-form";
 
@@ -24,8 +25,6 @@ import {
 
 import "@reach/combobox/styles.css";
 import mapStyles from "./mapStyles";
-
-import axios from "axios";
 
 // ------------- images -----------------
 import routerella from "./images/routerella3.png"
@@ -102,6 +101,18 @@ export default function App() {
       })
     );
     console.log(request); //şimdilik console da yazıyor
+
+    // lambda call - güvenlik için onu da env'tan okuyor 
+    const api = process.env.REACT_APP_AWS_LAMBDA_URL;
+    const data = { "first_num": 25, "second_num": 10 }; // tabii ki bu data, şimdilik böyle. diğer tarafın düzenlemesi bitince request'i göndereceğiz direk
+    axios
+      .post(api, data)
+      .then((response) => {
+        console.log(response.data);
+      })
+      .catch((error) => {
+        console.log(error);
+      });
   };
   
   return (
