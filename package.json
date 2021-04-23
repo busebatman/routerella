@@ -1,6 +1,5 @@
 {
   "name": "routerella",
-  "proxy": "https://j2uiqq5sh3.execute-api.eu-west-1.amazonaws.com",
   "version": "0.1.0",
   "private": true,
   "dependencies": {

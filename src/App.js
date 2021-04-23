@@ -53,7 +53,8 @@ const center = {
 //-----------------------------------------------------------------
 
 localStorage.setItem('busStopCount', 0); // böyle bir değişken tutuyorum ve 0'dan başlatıyorum. her eklendiğinde 1 artıracağım.
-localStorage.setItem('maxBusStop', 1); // otobüs sayısı için - default 1
+localStorage.setItem('maxBusCount', 1); // otobüs sayısı için - default 1
+localStorage.setItem('busCapacity', 16); // optimallik seviyesi için - default 16
 localStorage.setItem('optimalityDegree', 1); // optimallik seviyesi için - default 1
 
 export default function App() {
@@ -92,21 +93,32 @@ export default function App() {
   if (!isLoaded) return "Loading...";
 
   const handleClick = () => {  //en son istek atmak için buton click ile json da toparlıyorum tüm inputları
-    let request = (
+
+    let locationsStr = ""; // python'daki formata çevirmeye çalışıyorum
+    markers.forEach(m => {
+      locationsStr += (
+        (m.num - 1) + " "
+      + (m.lat.toFixed(2) * 100) + " "
+      + (m.lng.toFixed(2) * 100) + " "
+      + m.studentNum + " "
+      );
+    });
+
+    const request = (
       JSON.stringify({
-        busStopCount: localStorage.getItem('busStopCount'),
-        maxBusStop: localStorage.getItem('maxBusStop'),
-        optimalityDegree: localStorage.getItem('optimalityDegree'),
-        locations: markers,
+        busStopCount: parseInt(localStorage.getItem('busStopCount'), 10),
+        maxBusCount: parseInt(localStorage.getItem('maxBusCount'), 10),
+        busCapacity: parseInt(localStorage.getItem('busCapacity'), 10),
+        optimalityDegree: parseInt(localStorage.getItem('optimalityDegree'), 10),
+        locations: locationsStr,
       })
     );
     console.log(request); //şimdilik console da yazıyor
 
     // lambda call - güvenlik için onu da env'tan okuyor 
     const api = process.env.REACT_APP_AWS_LAMBDA_URL;
-    const data = { "first_num": 25, "second_num": 10 }; // tabii ki bu data, şimdilik böyle. diğer tarafın düzenlemesi bitince request'i göndereceğiz direk
     axios
-      .post(api, data)
+      .post(api, request)
       .then((response) => {
         console.log(response.data);
       })
@@ -165,6 +177,8 @@ export default function App() {
       </GoogleMap>
 
       <BusNumberForm/>
+
+      <BusCapacityForm/>
 
       <OptimalityForm/>
       <button onClick = {handleClick}> RUN! </button>
@@ -240,7 +254,7 @@ function BusNumberForm() {
   const { register, handleSubmit } = useForm();
 
   const onSubmit = (data) => {
-    localStorage.setItem('maxBusStop', data.busNumber);
+    localStorage.setItem('maxBusCount', data.busNumber);
   };
 
   return (
@@ -251,6 +265,31 @@ function BusNumberForm() {
           <input
             type="number" // sadece sayı değeri girilebilmesi için böyle bir şey ekledim
             name="busNumber"
+            ref={register}
+          />
+          <button type="submit"> OK </button>
+        </div>
+      </form>
+   </div>
+  );
+}
+
+// otobüs kapasitesini alabilmek için
+function BusCapacityForm() {
+  const { register, handleSubmit } = useForm();
+
+  const onSubmit = (data) => {
+    localStorage.setItem('busCapacity', data.busCapacity);
+  };
+
+  return (
+    <div> 
+      <form onSubmit={handleSubmit(onSubmit)}>
+        <div className="form-control">
+        <label>Enter the student capacity of buses: </label>
+          <input
+            type="number" // sadece sayı değeri girilebilmesi için böyle bir şey ekledim
+            name="busCapacity"
             ref={register}
           />
           <button type="submit"> OK </button>
