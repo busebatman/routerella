@@ -72,18 +72,16 @@ class Individual:
         for i in self.bus_routes:
             i.calcCapacity()      
             
-    def printType(self):
+    def printType(self, empty_str):
         for i in range(len(self.bus_routes)):
-
-            print('Bus ',str(i))
-
+            empty_str += ("\nBus " + str(i))
             stops = self.bus_routes[i].stops
             for j in range(len(stops)):
-                if stops[j].index == '0':
-                   print('School\n')
+                if str(stops[j].index) == '0':
+                   empty_str += "\nSchool\n"
                 else:
-                    print('Stop:', stops[j].index, '  Number of students:', str(stops[j].numofStd))
-            
+                    empty_str += ("\nStop: " + str(stops[j].index) + "  Number of students: " + str(stops[j].numofStd))
+        return empty_str    
 class Fitness:
     def __init__(self, route):
         self.route = route
@@ -159,6 +157,8 @@ def extractFurthestStop(Individual, extracted_stop_list, school, i):
             if(stop_num == 0): #eğer ilk duraktaysam önceki durak okuldur
                 prev_stop_num = len(Individual.bus_routes[i].stops)-1              
             stop1 = copy.deepcopy(Individual.bus_routes[i].stops[stop_num])
+            if(prev_stop_num >= len(stop1.distances) or next_stop_num >= len(stop1.distances)):
+                break
             total_distance += stop1.distances[prev_stop_num]
             total_distance += stop1.distances[next_stop_num]                    
         total_distance_list.append(total_distance)
@@ -322,17 +322,13 @@ def repairRandom(Individual, school, bus_limit, busCapacity):
 def repairPop(population, school, option, busCapacity, bus_limit):	
     repairedPop = []	
     for i in population:
+        if i is None:
+            continue
         if option == 0:
             temp = repair(i, school, bus_limit, busCapacity)
         elif option == 1:
             temp = repairRandom(i, school, bus_limit, busCapacity)
-        """TODO: repairden 1 değil kendisini döndürmeyi dene"""
         if type(temp) is Individual:
-            """for j in temp.bus_routes:
-
-                if j.totalCapacity > 30:  
-                    print("\nstops: ", j.stops)
-                    print("\nexceed")"""
             repairedPop.append(temp)	
         else:	
             repairedPop.append(i)	
@@ -370,7 +366,6 @@ def route_mutate(indv, mutationRate):
                             while (rand1 == j) or (int(indvc.bus_routes[i].stops[rand1].index)==0):
                                 rand1 = random.randint(0, len(indvc.bus_routes[i].stops) - 1)  
                             temp = copy.deepcopy(indvc.bus_routes[i].stops[j])
-                            #print("bus ", i, " stop ", indvc.bus_routes[i].stops[j].index, " with stop ", indvc.bus_routes[i].stops[rand1].index)
                             indvc.bus_routes[i].stops[j] = copy.deepcopy(indvc.bus_routes[i].stops[rand1])
                             indvc.bus_routes[i].stops[rand1] = temp
                             break
@@ -396,7 +391,6 @@ def bus_mutate(indv, mutationRate):
             rand2_j = random.randint(0, len(indvc.bus_routes[rand2_i].stops) - 1) 
             while (int(indvc.bus_routes[rand2_i].stops[rand2_j].index)==0):
                 rand2_j = random.randint(0, len(indvc.bus_routes[rand2_i].stops) - 1)
-            #print("bus ", i, " stop ", rand1_j, "and bus ", rand2_i, " stop ", rand2_j)
             temp = copy.deepcopy(indvc.bus_routes[i].stops[rand1_j])
             indvc.bus_routes[i].stops[rand1_j] = copy.deepcopy(indvc.bus_routes[rand2_i].stops[rand2_j])
             indvc.bus_routes[rand2_i].stops[rand2_j] = temp
@@ -481,7 +475,6 @@ def repairAfterCrossover(child, school, real_stops, bus_limit, busCapacity,):
         child.bus_routes.remove(child.bus_routes[i - inx])
         inx += 1
         
-    """TODO:realstops ve normalstops aynı mı öyleeyse real kullanabiliriz"""
     # ADD REMOVED STOPS TO NEXT BUS
     normal_stops = []
     for i in range(len(real_stops)): # 10 -- durak sayısı / normalde parametere olarak alınacak
@@ -519,7 +512,7 @@ def crossover(parent1, parent2, school, stops, crossoverRate, bus_limit, busCapa
 
         child = Individual(parent1[0 : x] + parent2[y : len(parent2)], bus_limit)
     
-        return repairAfterCrossover(child, school, stops, bus_limit, busCapacity)
+        child = repairAfterCrossover(child, school, stops, bus_limit, busCapacity)
 
     else:
         rand = random.randint(0, 2) 
@@ -552,37 +545,30 @@ def geneticAlgorithm(stops, maxBus, busCapacity, popSize, eliteSize, mutationRat
     currentPop = repairPop(currentPop, school, repairOption, busCapacity, maxBus)        
     
     fs=fitnessScores(currentPop)
-    print("Initial distance: " + str(fs[0][1]))
-    # output_file.write("Initial distance: " + str(fs[0][1]))
-    routee = currentPop[fs[0][0]]
-    # routee.printType(output_file)
+    #print("Initial distance: " + str(fs[0][1]))
+    initial_dis = str(fs[0][1])
 
     if currentPop[fs[0][0]].busLimitExceed()!=0:
         fsp=fitnessScoresPure(currentPop)
-        print("Score without penalty: ", str(fsp[0][1]))
-        # output_file.write("\nScore without penalty: " + str(fsp[0][1]))
 
     for i in range(generations):
         currentPop = nextGeneration(currentPop, eliteSize, mutationRate, mutation_op, k, school,stops, maxBus, repairOption, crossoverRate, busCapacity)
         fs = fitnessScores(currentPop)
-        # print("Current distance: " + str(fs[0][1]))
-        # output_file.write("\nCurrent distance: " + str(fs[0][1]))
 
     fs = fitnessScores(currentPop)
-    print("Final distance: " + str(fs[0][1]))
-    # output_file.write("\nFinal distance: " + str(fs[0][1]))
+    #print("Final distance: " + str(fs[0][1]))
+    final_dis = str(fs[0][1])
 
     if currentPop[fs[0][0]].busLimitExceed()!=0:
         fsp=fitnessScoresPure(currentPop)
-        print("Score without penalty: ", str(fsp[0][1]))
-        # output_file.write("\nScore without penalty: " + str(fsp[0][1]))
 
     bestRouteIndex = fs[0][0]
     bestRoute = currentPop[bestRouteIndex]
     
-    return bestRoute
+    return bestRoute, initial_dis, final_dis
 
 def lambda_handler(event, context):
+    random.seed(5)
     
     body = json.loads(event['body'])
     busStopCount = body['busStopCount']
@@ -591,20 +577,42 @@ def lambda_handler(event, context):
     optimalityDegree = body['optimalityDegree']
     locations = body['locations']
     
-    maxBus = maxBusCount
-    busCapacity = busCapacity
+    #stops = locations
+    
+    stops = []
+    for stop in locations:
+        if int(stop[0]) == 0:
+            stops.append(Stop(int(stop[1]), int(stop[2]), int(stop[3]), stop[0]))
+        else:
+            stops.append(Stop(int(stop[1]), int(stop[2]), int(stop[3]), stop[0]))
+    
+    distance_matrix = []	
+    for i in range(len(stops)):	
+        row = []	
+        for j in range(len(stops)):	
+            row.append(stops[i].distance(stops[j]))	
+        stops[i].distances = row
+        distance_matrix.append(row)	
+        
+    maxBus = int(maxBusCount)
+    busCapacity = int(busCapacity)
     
     popSize = 10
     eliteSize = 1
-    #mutationRate = 0.5 / len(stops)
+    mutationRate = 0.5 / len(stops)
     mutation_op = 0
-    generations = 10
+    generations = 100
     k = 1
     repairOption = 0
     crossoverRate = 0.5
-        
-    #route = geneticAlgorithm(stops,school, maxBus, busCapacity, popSize, eliteSize, mutationRate, mutation_op, generations, k, repairOption, crossoverRate)
-
+    
+    school = stops[0]
+    stops.remove(school)
+    
+    route, initial_dis, final_dis = geneticAlgorithm(stops, maxBus, busCapacity, popSize, eliteSize, mutationRate, mutation_op, generations, k, school, repairOption, crossoverRate)
+    # school = '0 1 5 - 0 2 4, 1 3 5' # array obje vs olarak dönemiyorum. string biçimine sokmak lazım. örn: 0 1 5 - 0 2 4, .... 
+    empty_str = ""
+    output = route.printType(empty_str)
     return {
         'statusCode': 200,
         'headers': {
@@ -612,39 +620,15 @@ def lambda_handler(event, context):
         },
         'body': json.dumps(
               "busStopCount: " + str(busStopCount)
-            + ", maxBusCount: " + str(maxBusCount)
-            + ", busCapacity: " + str(busCapacity)
-            + ", optimalityDegree: " + str(optimalityDegree)
-            + ", locations: " + str(locations)
+            + "\nmaxBusCount: " + str(maxBusCount)
+            + "\nbusCapacity: " + str(busCapacity)
+            + "\noptimalityDegree: " + str(optimalityDegree)
+            + "\ninitial distance: " + initial_dis
+            + "\nfinal distance: " + final_dis
+            + "\nbest route: " + output
         )
     }
 
-
     """
-    bu dosyayı eklememin nedeni şu: şu anki sorunumuz, locationları file'dan okumak yerine 
-    gönderdiğimiz formatta okuyup işlem yapmasını sağlayabilmek.
-
-    bilgiler artık bu şekilde geliyor:
-    {
-        "busStopCount": 3,
-        "maxBusCount": 1,
-        "busCapacity": 16,
-        "optimalityDegree": 1,
-        "locations": "0 4151 2753 0 1 4118 2840 3 2 4105 2937 5 "
-    }
-
-    locations için:
-    okul -> 0 4151 2753 0
-    1. durak -> 1 4118 2840 3
-    2. durak -> 2 4105 2937 5
-    ... şeklinde. file'a benzetmeye çalıştım.
-    artık file'da line line okumak yerine 4lü 4lü gruplayabiliriz belki.
-
-    optimality degree için test için yaptığımız loopa benzer bir loop yapabiliriz.
-
-    bir diğer sorun da şu: 
-    şu anki dönen cevabı response olarak dönemiyoruz.
-    array - object vs kabul etmiyor.
-    string olarak dönmek lazım.
-    yukarıdaki return'deki body gibi mesela.
+    optimality degree kullanılmıyor şu an. onu da bir şekilde olaya dahil edebiliriz sanki
     """
