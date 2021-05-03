@@ -93,9 +93,13 @@ export default function App() {
   if (!isLoaded) return "Loading...";
 
   const handleClick = () => {  //en son istek atmak için buton click ile json da toparlıyorum tüm inputları
-
+    //array haliyle denedim aynısını değiştirmeye gerek kalmaz belki diye düşündüm bu haliyle direk python kodumuzdaki stops[] haliyle oluşmuş oluyor
+    let stopsArr= Array(markers.length).fill(0).map(row => new Array(4).fill(0));
+    let index=0;
     let locationsStr = ""; // python'daki formata çevirmeye çalışıyorum
     markers.forEach(m => {
+      stopsArr[index]=[(m.num-1),(m.lat.toFixed(2) * 100),(m.lng.toFixed(2) * 100),m.studentNum];
+      index++;
       locationsStr += (
         (m.num - 1) + " "
       + (m.lat.toFixed(2) * 100) + " "
@@ -103,7 +107,7 @@ export default function App() {
       + m.studentNum + " "
       );
     });
-
+    console.log(stopsArr); //şimdilik console da yazdırdım, hangi halde daha iyi olur diyorsanız ona göre arrayle ya da stringle request atarız
     const request = (
       JSON.stringify({
         busStopCount: parseInt(localStorage.getItem('busStopCount'), 10),
