@@ -127,6 +127,30 @@ export default function App() {
       .catch((error) => {
         console.log(error);
       });
+
+    /* 
+    this method draws the route.
+    instead of markers, it should take the produced route by the algorithm.
+    we can change the output format of the algorithm. for example like:
+    [
+    {
+      bus: 1,
+      busStops: [
+        {lat: 42.20, lng: 36.40},
+        {lat: 45.30, lng: 32.10},
+      ]
+    },
+    {
+      bus: 2,
+      busStops: [
+        {lat: 42.20, lng: 36.40},
+        {lat: 45.30, lng: 32.10},
+      ]
+    }
+    ...
+    ]
+    */
+    initMap(markers, mapRef.current);
   };
   
   return (
@@ -398,4 +422,39 @@ function Search({ panTo }) {
       </Combobox>
     </div>
   );
+}
+
+function initMap(markers, map) {
+  // after it takes the produced routes as input,
+  // for each bus, it should create the coordinates and should run setMap function
+  
+  // for example - first route
+  const coordinates = [
+    { lat: markers[1].lat, lng: markers[1].lng },
+    { lat: markers[0].lat, lng: markers[0].lng },
+  ];
+  const route = new window.google.maps.Polyline({
+    path: coordinates,
+    geodesic: true,
+    strokeColor: "#7E1E9A",
+    strokeOpacity: 5.0,
+    strokeWeight: 4,
+  });
+   
+  // for example - second route
+  const coordinates2 = [
+    { lat: markers[2].lat, lng: markers[2].lng },
+    { lat: markers[3].lat, lng: markers[3].lng },
+    { lat: markers[0].lat, lng: markers[0].lng },
+  ];
+  const route2 = new window.google.maps.Polyline({
+    path: coordinates2,
+    geodesic: true,
+    strokeColor: "#7E1E9A",
+    strokeOpacity: 5.0,
+    strokeWeight: 4,
+  });
+
+  route.setMap(map);
+  route2.setMap(map);
 }
