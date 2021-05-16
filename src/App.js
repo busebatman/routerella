@@ -119,19 +119,20 @@ export default function App() {
 
     // lambda call - güvenlik için onu da env'tan okuyor 
     const api = process.env.REACT_APP_AWS_LAMBDA_URL;
+    let finalRoutes;
     axios
       .post(api, request)
       .then((response) => {
+        finalRoutes = response.data;
         console.log(response.data);
+        initMap(finalRoutes, mapRef.current);
       })
       .catch((error) => {
         console.log(error);
       });
 
     /* 
-    this method draws the route.
-    instead of markers, it should take the produced route by the algorithm.
-    we can change the output format of the algorithm. for example like:
+    now, output comes like this:
     [
     {
       bus: 1,
@@ -150,7 +151,6 @@ export default function App() {
     ...
     ]
     */
-    initMap(markers, mapRef.current);
   };
   
   return (
@@ -424,37 +424,15 @@ function Search({ panTo }) {
   );
 }
 
-function initMap(markers, map) {
-  // after it takes the produced routes as input,
-  // for each bus, it should create the coordinates and should run setMap function
-  
-  // for example - first route
-  const coordinates = [
-    { lat: markers[1].lat, lng: markers[1].lng },
-    { lat: markers[0].lat, lng: markers[0].lng },
-  ];
-  const route = new window.google.maps.Polyline({
-    path: coordinates,
-    geodesic: true,
-    strokeColor: "#7E1E9A",
-    strokeOpacity: 5.0,
-    strokeWeight: 4,
+function initMap(finalRoutes, map) {
+  finalRoutes.forEach(route => {
+    const mapRoute = new window.google.maps.Polyline({
+      path: route.busStops,
+      geodesic: true,
+      strokeColor: "#7E1E9A",
+      strokeOpacity: 5.0,
+      strokeWeight: 4,
+    });
+    mapRoute.setMap(map);
   });
-   
-  // for example - second route
-  const coordinates2 = [
-    { lat: markers[2].lat, lng: markers[2].lng },
-    { lat: markers[3].lat, lng: markers[3].lng },
-    { lat: markers[0].lat, lng: markers[0].lng },
-  ];
-  const route2 = new window.google.maps.Polyline({
-    path: coordinates2,
-    geodesic: true,
-    strokeColor: "#7E1E9A",
-    strokeOpacity: 5.0,
-    strokeWeight: 4,
-  });
-
-  route.setMap(map);
-  route2.setMap(map);
 }

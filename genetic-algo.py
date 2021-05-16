@@ -72,16 +72,19 @@ class Individual:
         for i in self.bus_routes:
             i.calcCapacity()      
             
-    def printType(self, empty_str):
+    def printType(self):
+        final_routes = []
+        
         for i in range(len(self.bus_routes)):
-            empty_str += ("\nBus " + str(i))
+            final_routes.append({"bus": (i + 1)})
+            final_routes[i]["busStops"] = []
+
             stops = self.bus_routes[i].stops
             for j in range(len(stops)):
-                if str(stops[j].index) == '0':
-                   empty_str += "\nSchool\n"
-                else:
-                    empty_str += ("\nStop: " + str(stops[j].index) + "  Number of students: " + str(stops[j].numofStd))
-        return empty_str    
+                final_routes[i]["busStops"].append({"lat": stops[j].x / 100, "lng": stops[j].y / 100})
+                
+        return final_routes
+        
 class Fitness:
     def __init__(self, route):
         self.route = route
@@ -610,25 +613,14 @@ def lambda_handler(event, context):
     stops.remove(school)
     
     route, initial_dis, final_dis = geneticAlgorithm(stops, maxBus, busCapacity, popSize, eliteSize, mutationRate, mutation_op, generations, k, school, repairOption, crossoverRate)
-    # school = '0 1 5 - 0 2 4, 1 3 5' # array obje vs olarak dönemiyorum. string biçimine sokmak lazım. örn: 0 1 5 - 0 2 4, .... 
-    empty_str = ""
-    output = route.printType(empty_str)
+    final_routes = route.printType()
+    
     return {
         'statusCode': 200,
         'headers': {
             'Access-Control-Allow-Origin': '*'
         },
         'body': json.dumps(
-              "busStopCount: " + str(busStopCount)
-            + "\nmaxBusCount: " + str(maxBusCount)
-            + "\nbusCapacity: " + str(busCapacity)
-            + "\noptimalityDegree: " + str(optimalityDegree)
-            + "\ninitial distance: " + initial_dis
-            + "\nfinal distance: " + final_dis
-            + "\nbest route: " + output
+            final_routes
         )
     }
-
-    """
-    optimality degree kullanılmıyor şu an. onu da bir şekilde olaya dahil edebiliriz sanki
-    """
