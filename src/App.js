@@ -196,6 +196,10 @@ export default function App() {
 
               {/* student sayısını alıp eklemek için selected marker da parametre verdim*/}
               <StudentNumberForm isSchool = {selected.num === 1} selected = {selected}/> 
+               <p></p> {/* iki buton arası boşluk olsun diye koydum ama sonra düzeltir şekil verir 
+              yan yana falan yaparız belki şimdilik işlev için alta ekledim
+              silme içinde ayrı fonksiyon oluşturdum ama direk buraya da yazabiliriz formu sonra*/}
+              <DeleteMarker selected={selected} markers={markers}/>
 
             </div>
           </InfoWindow>
@@ -243,6 +247,42 @@ function InformationBox({ isSchool }) {
         <span role="img" aria-label="busstop">🚏  </span>{" "} Bus Stop
       </h2>
     </div>
+  );
+}
+
+//marker silme fonksiyonu
+function DeleteMarker({selected, markers}){
+
+  const {handleSubmit}=useForm()
+
+  const handleDelete=(data)=>{
+    //bunu yoruma aldım alttaki kısımla isterseniz açabiliriz 
+    //bir input box da Delete yazılmasını isteyip confirm ediyor yazılmadıysa silmiyor
+    //if(data.confirmChoice==="Delete"){  
+      
+      var index=markers.indexOf(selected) //seçili markerın indexini buluyor
+      //splice methodu tüm markerlar içinde verilen ilk parametre indexinden başlayıp ikinci parametre kadar marker siliyor
+      var deleted=markers.splice(index,1) 
+      console.log(deleted)  //bunu kontrol için ekledim silebiliriz sonra
+    //}
+  }
+
+  return (
+    <form onSubmit={handleSubmit(handleDelete)}>
+
+      {/*<div className="form-control">
+        <label>Confirm: Write \'Delete\'</label>
+          <input
+          type="name"
+          name="confirmChoice"
+          ref={register}/>
+      </div>
+  */}
+      <div className="form-control">
+      <label></label>
+      <button type="submit">Delete</button>
+      </div>
+    </form>
   );
 }
 
@@ -425,14 +465,17 @@ function Search({ panTo }) {
 }
 
 function initMap(finalRoutes, map) {
+  let colorArray=["#7E1E9A","#FF5733","#23EC16","#ECA816","#16E6EC","#950AE9","#E90ACE","#16EC9E","#E90A1B","#164AEC","#030303"] //rastgele renkler girdim şimdilik sonra değiştiririz
+  let colorIndex=0;
   finalRoutes.forEach(route => {
     const mapRoute = new window.google.maps.Polyline({
       path: route.busStops,
       geodesic: true,
-      strokeColor: "#7E1E9A",
+      strokeColor: colorArray[colorIndex],
       strokeOpacity: 5.0,
       strokeWeight: 4,
     });
     mapRoute.setMap(map);
+    colorIndex++;
   });
 }
