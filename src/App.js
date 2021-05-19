@@ -26,13 +26,16 @@ import {
 import "@reach/combobox/styles.css";
 import mapStyles from "./mapStyles";
 
+//tüm renklerin hex kodlarını ayrı dosyaya yazdım yaklaşık 140 150 tane var ordan çekiyor :)
+import {colorValues} from "./colors.js";  
+
 // ------------- images -----------------
 import routerella from "./images/routerella3.png"
 import school from "./images/school3.png"
 import schoolIconForMap from "./images/school.jpeg"
 import busStopIconForMap from "./images/bus_stop.jpeg"
-
 //-----------------------------------------------------------------
+
 const libraries = ["places"];
 
 const mapContainerStyle = {
@@ -56,7 +59,7 @@ localStorage.setItem('busStopCount', 0); // böyle bir değişken tutuyorum ve 0
 localStorage.setItem('maxBusCount', 1); // otobüs sayısı için - default 1
 localStorage.setItem('busCapacity', 16); // optimallik seviyesi için - default 16
 localStorage.setItem('optimalityDegree', 1); // optimallik seviyesi için - default 1
-
+localStorage.setItem('lastBusStopCount',0); //okul silerse yeniden okul eklerken son kalınan count tutsun diye koydum
 export default function App() {
   const { isLoaded, loadError } = useLoadScript({
     googleMapsApiKey: process.env.REACT_APP_GOOGLE_MAPS_API_KEY,
@@ -65,13 +68,18 @@ export default function App() {
 
   const [markers, setMarkers] = React.useState([]);
   const [selected, setSelected] = React.useState(null);
-
   const onMapClick = React.useCallback((e) => {
-    localStorage.setItem('busStopCount', parseInt(localStorage.getItem('busStopCount'), 10) + 1); // her durak eklemesinde 1 artırıyorum
-    setMarkers((current) => [
+    //okul sildikten sonra ilk eklenecek durak için kaldığı yerden devam etsin diye 
+    if(parseInt(localStorage.getItem('lastBusStopCount'))!==0 && parseInt(localStorage.getItem('busStopCount'))!==0){
+      localStorage.setItem('busStopCount', parseInt(localStorage.getItem('lastBusStopCount'), 10)); //kalınan durağı asıl counta verip kalınanı 0lıyor      localStorage.setItem('lastBusStopCount', 0); 
+    }
+    else{ //normal case
+      localStorage.setItem('busStopCount', parseInt(localStorage.getItem('busStopCount'), 10) + 1); // her durak eklemesinde 1 artırıyorum
+    }
+    setMarkers((current) =>[
       ...current,
       {
-        num: parseInt(localStorage.getItem('busStopCount')),
+        num:parseInt(localStorage.getItem('busStopCount')),
         lat: e.latLng.lat(),
         lng: e.latLng.lng(),
         studentNum: 0,
@@ -94,6 +102,7 @@ export default function App() {
 
   const handleClick = () => {  //en son istek atmak için buton click ile json da toparlıyorum tüm inputları
     //array haliyle denedim aynısını değiştirmeye gerek kalmaz belki diye düşündüm bu haliyle direk python kodumuzdaki stops[] haliyle oluşmuş oluyor
+    console.log(markers)
     let stopsArr = Array(markers.length).fill(0).map(row => new Array(4).fill(0));
     let index = 0;
     markers.forEach(m => {
@@ -116,15 +125,14 @@ export default function App() {
       })
     );
     console.log(request); //şimdilik console da yazıyor
-
     // lambda call - güvenlik için onu da env'tan okuyor 
-    const api = process.env.REACT_APP_AWS_LAMBDA_URL;
+    const api = "process.env.REACT_APP_AWS_LAMBDA_URL";
     let finalRoutes;
     axios
       .post(api, request)
       .then((response) => {
         finalRoutes = response.data;
-        console.log(response.data);
+        console.log(finalRoutes);
         initMap(finalRoutes, mapRef.current);
       })
       .catch((error) => {
@@ -152,7 +160,7 @@ export default function App() {
     ]
     */
   };
-  
+ 
   return (
     <div>
       {/* // bu şekilde fonksiyon çağırmış oluyorum. daha temiz görünüyor */}
@@ -178,13 +186,12 @@ export default function App() {
             }}
           />
         ))}
-
         {selected ? (
           <InfoWindow
             position={{ lat: selected.lat, lng: selected.lng }}
             onCloseClick={() => {
               setSelected(null);
-            }}
+            }}            
           >
             <div>
               <InformationBox isSchool = {selected.num === 1}/>
@@ -196,12 +203,13 @@ export default function App() {
 
               {/* student sayısını alıp eklemek için selected marker da parametre verdim*/}
               <StudentNumberForm isSchool = {selected.num === 1} selected = {selected}/> 
-               <p></p> {/* iki buton arası boşluk olsun diye koydum ama sonra düzeltir şekil verir 
+              <p></p> {/* iki buton arası boşluk olsun diye koydum ama sonra düzeltir şekil verir 
               yan yana falan yaparız belki şimdilik işlev için alta ekledim
               silme içinde ayrı fonksiyon oluşturdum ama direk buraya da yazabiliriz formu sonra*/}
               <DeleteMarker selected={selected} markers={markers}/>
 
             </div>
+
           </InfoWindow>
         ) : null}
       </GoogleMap>
@@ -261,6 +269,20 @@ function DeleteMarker({selected, markers}){
     //if(data.confirmChoice==="Delete"){  
       
       var index=markers.indexOf(selected) //seçili markerın indexini buluyor
+      
+      if(index!==0){  //normal durak siliyorsam ondan sonrakilerin numberlarını 1 azaltıyorum. Zaten hata veriyor post etmiyor diğer türlü sıra bozulunca :D
+        var ind=index+1
+        while(ind<markers.length){
+          markers[ind].num--
+          ind++;
+        }
+      }
+      else{ //okul ise last count atıyorum asıl count 0lıyorum ilk eklenen okul olsun sonra devam etsin diye
+        localStorage.setItem('lastBusStopCount', parseInt(localStorage.getItem('busStopCount'), 10)); // her durak eklemesinde 1 artırıyorum
+        localStorage.setItem('busStopCount', 0); // her durak eklemesinde 1 artırıyorum
+
+      }
+
       //splice methodu tüm markerlar içinde verilen ilk parametre indexinden başlayıp ikinci parametre kadar marker siliyor
       var deleted=markers.splice(index,1) 
       console.log(deleted)  //bunu kontrol için ekledim silebiliriz sonra
@@ -465,17 +487,25 @@ function Search({ panTo }) {
 }
 
 function initMap(finalRoutes, map) {
-  let colorArray=["#7E1E9A","#FF5733","#23EC16","#ECA816","#16E6EC","#950AE9","#E90ACE","#16EC9E","#E90A1B","#164AEC","#030303"] //rastgele renkler girdim şimdilik sonra değiştiririz
-  let colorIndex=0;
+ 
+  console.log(colorValues)
+  let colorIndex=Math.round(Math.random()*colorValues.length);  //random sayı alıp ona göre renk seçiyorum içerde de kontrol ediyorum aynı olmasın hiçbiri diye
+  let indices=[finalRoutes.length]
+  var i=0
   finalRoutes.forEach(route => {
+    indices[i]=colorIndex
+    console.log(colorIndex,colorValues[colorIndex])
     const mapRoute = new window.google.maps.Polyline({
       path: route.busStops,
       geodesic: true,
-      strokeColor: colorArray[colorIndex],
+      strokeColor: colorValues[colorIndex],
       strokeOpacity: 5.0,
       strokeWeight: 4,
     });
     mapRoute.setMap(map);
-    colorIndex++;
+    colorIndex=Math.round(Math.random()*colorValues.length);
+    while(indices.includes(colorIndex)){
+      colorIndex=Math.round(Math.random()*colorValues.length);
+    }
   });
 }
