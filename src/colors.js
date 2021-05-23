@@ -130,28 +130,8 @@ const colorValues=[
 	"#A52A2A",  //Brown
 	"#800000",  //Maroon
 
-    //White colors
-    "#FFFFFF",  //White
-	"#FFFAFA",  //Snow
-	"#F0FFF0",  //HoneyDew
-	"#F5FFFA",  //MintCream
-	"#F0FFFF",  //Azure
-	"#F0F8FF",  //AliceBlue
-	"#F8F8FF",  //GhostWhite
-	"#F5F5F5",  //WhiteSmoke
-	"#FFF5EE",  //SeaShell
-	"#F5F5DC",  //Beige
-	"#FDF5E6",  //OldLace
-	"#FFFAF0",  //FloralWhite
-	"#FFFFF0",  //Ivory
-	"#FAEBD7",  //AntiqueWhite
-	"#FAF0E6",  //Linen
-	"#FFF0F5",  //LavenderBlush
-	"#FFE4E1",  //MistyRose
-
     //Gray Colors
     "#DCDCDC",  //Gainsboro
-	"#D3D3D3",  //LightGray
 	"#C0C0C0",  //Silver
 	"#A9A9A9",  //DarkGray
 	"#808080",  //Gray

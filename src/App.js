@@ -59,7 +59,8 @@ localStorage.setItem('busStopCount', 0); // böyle bir değişken tutuyorum ve 0
 localStorage.setItem('maxBusCount', 1); // otobüs sayısı için - default 1
 localStorage.setItem('busCapacity', 16); // optimallik seviyesi için - default 16
 localStorage.setItem('optimalityDegree', 1); // optimallik seviyesi için - default 1
-localStorage.setItem('lastBusStopCount',0); //okul silerse yeniden okul eklerken son kalınan count tutsun diye koydum
+localStorage.setItem('lastBusStopCount', 0); // okul silerse yeniden okul eklerken son kalınan count tutsun diye koydum
+
 export default function App() {
   const { isLoaded, loadError } = useLoadScript({
     googleMapsApiKey: process.env.REACT_APP_GOOGLE_MAPS_API_KEY,
@@ -68,22 +69,26 @@ export default function App() {
 
   const [markers, setMarkers] = React.useState([]);
   const [selected, setSelected] = React.useState(null);
+
   const onMapClick = React.useCallback((e) => {
     //okul sildikten sonra ilk eklenecek durak için kaldığı yerden devam etsin diye 
-    if(parseInt(localStorage.getItem('lastBusStopCount'))!==0 && parseInt(localStorage.getItem('busStopCount'))!==0){
-      localStorage.setItem('busStopCount', parseInt(localStorage.getItem('lastBusStopCount'), 10)+1); //kalınan durağı asıl counta verip kalınanı 0lıyor      
+    if (parseInt(localStorage.getItem('lastBusStopCount')) !== 0 && parseInt(localStorage.getItem('busStopCount')) !== 0){
+      localStorage.setItem('busStopCount', parseInt(localStorage.getItem('lastBusStopCount'), 10) + 1); //kalınan durağı asıl counta verip kalınanı 0lıyor      
       localStorage.setItem('lastBusStopCount', 0); 
     }
-    else{ //normal case
+    else { //normal case
       localStorage.setItem('busStopCount', parseInt(localStorage.getItem('busStopCount'), 10) + 1); // her durak eklemesinde 1 artırıyorum
     }
+
+    const busStopIndex = parseInt(localStorage.getItem('busStopCount'));
+
     setMarkers((current) =>[
       ...current,
       {
-        num:parseInt(localStorage.getItem('busStopCount')),
+        num: busStopIndex,
         lat: e.latLng.lat(),
         lng: e.latLng.lng(),
-        studentNum: 0,
+        studentNum: busStopIndex === 1 ? 0 : 1, // default 0 for school - 1 for busStops
       },
     ]);
   }, []);
@@ -103,7 +108,7 @@ export default function App() {
 
   const handleClick = () => {  //en son istek atmak için buton click ile json da toparlıyorum tüm inputları
     //array haliyle denedim aynısını değiştirmeye gerek kalmaz belki diye düşündüm bu haliyle direk python kodumuzdaki stops[] haliyle oluşmuş oluyor
-    console.log(markers)
+    // console.log(markers)
     let stopsArr = Array(markers.length).fill(0).map(row => new Array(4).fill(0));
     let index = 0;
     markers.forEach(m => {
@@ -114,7 +119,7 @@ export default function App() {
         m.studentNum,
       ];
     });
-    console.log(stopsArr); //şimdilik console da yazdırdım, hangi halde daha iyi olur diyorsanız ona göre arrayle ya da stringle request atarız
+    // console.log(stopsArr); //şimdilik console da yazdırdım, hangi halde daha iyi olur diyorsanız ona göre arrayle ya da stringle request atarız
     
     const request = (
       JSON.stringify({
@@ -126,40 +131,19 @@ export default function App() {
       })
     );
     console.log(request); //şimdilik console da yazıyor
-    // lambda call - güvenlik için onu da env'tan okuyor 
-    const api = "process.env.REACT_APP_AWS_LAMBDA_URL";
+
+    const api = process.env.REACT_APP_AWS_LAMBDA_URL;
     let finalRoutes;
     axios
       .post(api, request)
       .then((response) => {
         finalRoutes = response.data;
-        console.log(finalRoutes);
+        // console.log(finalRoutes);
         initMap(finalRoutes, mapRef.current);
       })
       .catch((error) => {
         console.log(error);
       });
-
-    /* 
-    now, output comes like this:
-    [
-    {
-      bus: 1,
-      busStops: [
-        {lat: 42.20, lng: 36.40},
-        {lat: 45.30, lng: 32.10},
-      ]
-    },
-    {
-      bus: 2,
-      busStops: [
-        {lat: 42.20, lng: 36.40},
-        {lat: 45.30, lng: 32.10},
-      ]
-    }
-    ...
-    ]
-    */
   };
  
   return (
@@ -173,7 +157,7 @@ export default function App() {
         <Search panTo={panTo} />
         {markers.map((marker) => (
           <Marker
-            key={`${marker.lat}-${marker.lng}`}
+            key={`${marker.lat} - ${marker.lng}`}
             position={{ lat: marker.lat, lng: marker.lng }}
             onClick={() => {
               setSelected(marker);
@@ -183,7 +167,7 @@ export default function App() {
               url: marker.num === 1 ? schoolIconForMap : busStopIconForMap,
               origin: new window.google.maps.Point(0, 0),
               anchor: new window.google.maps.Point(15, 15),
-              scaledSize: new window.google.maps.Size(30, 30),
+              scaledSize: new window.google.maps.Size(35, 35),
             }}
           />
         ))}
@@ -192,25 +176,22 @@ export default function App() {
             position={{ lat: selected.lat, lng: selected.lng }}
             onCloseClick={() => {
               setSelected(null);
-            }}            
-          >
+            }}>
             <div>
               <InformationBox isSchool = {selected.num === 1}/>
               {/* virgülden sonraki 3 basamak için toFixed kullandım */}
-              <p>Latitude: {selected.lat.toFixed(3)}</p>
+              {/* <p>Latitude: {selected.lat.toFixed(3)}</p>
               <p>Longitude: {selected.lng.toFixed(3)}</p>
-              <p>Number: {selected.num}</p>
-              <p>Student Number: {selected.studentNum}</p>
+              <p>Number: {selected.num}</p> */}
+              <p> Total number of assigned students: {selected.studentNum} </p>
 
               {/* student sayısını alıp eklemek için selected marker da parametre verdim*/}
               <StudentNumberForm isSchool = {selected.num === 1} selected = {selected}/> 
               <p></p> {/* iki buton arası boşluk olsun diye koydum ama sonra düzeltir şekil verir 
               yan yana falan yaparız belki şimdilik işlev için alta ekledim
               silme içinde ayrı fonksiyon oluşturdum ama direk buraya da yazabiliriz formu sonra*/}
-              <DeleteMarker selected={selected} markers={markers}/>
-
+              <DeleteMarker selected = {selected} markers = {markers}/>
             </div>
-
           </InfoWindow>
         ) : null}
       </GoogleMap>
@@ -220,7 +201,8 @@ export default function App() {
       <BusCapacityForm/>
 
       <OptimalityForm/>
-      <button onClick = {handleClick}> RUN! </button>
+      <p></p>
+      <center> <button className="button" onClick = {handleClick}> RUN! </button> </center>
     </div>
   );
 }
@@ -244,56 +226,60 @@ function InformationBox({ isSchool }) {
   if (isSchool) {
     return (
       <div>
+        <center>
         <h2>
-          <span role="img" aria-label="school">🏫  </span>{" "} School
+          <span role="img" aria-label="school"> 🏫 </span> School
         </h2>
+        </center>
       </div>
     );
   }
   return (
     <div>
+      <center>
       <h2>
-        <span role="img" aria-label="busstop">🚏  </span>{" "} Bus Stop
+        <span role="img" aria-label="busstop">🚏 </span> Bus Stop
       </h2>
+      </center>
     </div>
   );
 }
 
 //marker silme fonksiyonu
-function DeleteMarker({selected, markers}){
+function DeleteMarker({ selected, markers }){
 
-  const {handleSubmit}=useForm()
+  const { handleSubmit } = useForm()
 
-  const handleDelete=(data)=>{
+  const handleDelete = (data) => {
     //bunu yoruma aldım alttaki kısımla isterseniz açabiliriz 
     //bir input box da Delete yazılmasını isteyip confirm ediyor yazılmadıysa silmiyor
     //if(data.confirmChoice==="Delete"){  
       
-      var index=markers.indexOf(selected) //seçili markerın indexini buluyor
+      var index = markers.indexOf(selected) //seçili markerın indexini buluyor
       
-      if(index!==0){  //normal durak siliyorsam ondan sonrakilerin numberlarını 1 azaltıyorum. Zaten hata veriyor post etmiyor diğer türlü sıra bozulunca :D
-        var ind=index+1
-        while(ind<markers.length){
+      if (index !== 0) {  //normal durak siliyorsam ondan sonrakilerin numberlarını 1 azaltıyorum. Zaten hata veriyor post etmiyor diğer türlü sıra bozulunca :D
+        var ind = index + 1
+        while(ind < markers.length){
           markers[ind].num--
           ind++;
         }
+        localStorage.setItem('busStopCount', parseInt(localStorage.getItem('busStopCount'), 10) - 1);
       }
-      else{ //okul ise last count atıyorum asıl count 0lıyorum ilk eklenen okul olsun sonra devam etsin diye
-        if(parseInt(localStorage.getItem('busStopCount'),10)!==1){
+      else { //okul ise last count atıyorum asıl count 0lıyorum ilk eklenen okul olsun sonra devam etsin diye
+        if (parseInt(localStorage.getItem('busStopCount'),10)!==1){
           localStorage.setItem('lastBusStopCount', parseInt(localStorage.getItem('busStopCount'), 10)); // en son kaldığım numarayı kaydediyorum
-
         }
         localStorage.setItem('busStopCount', 0); // okul eklemesi için 0lıyorum
       }
 
       //splice methodu tüm markerlar içinde verilen ilk parametre indexinden başlayıp ikinci parametre kadar marker siliyor
-      var deleted=markers.splice(index,1) 
+      var deleted = markers.splice(index, 1) 
       console.log(deleted)  //bunu kontrol için ekledim silebiliriz sonra
     //}
   }
 
   return (
-    <form onSubmit={handleSubmit(handleDelete)}>
+    <form onSubmit = {handleSubmit(handleDelete)}>
 
       {/*<div className="form-control">
         <label>Confirm: Write \'Delete\'</label>
@@ -304,8 +290,7 @@ function DeleteMarker({selected, markers}){
       </div>
   */}
       <div className="form-control">
-      <label></label>
-      <button type="submit">Delete</button>
+      <center> <button type="submit"> Delete </button> </center>
       </div>
     </form>
   );
@@ -323,18 +308,18 @@ function StudentNumberForm({ isSchool, selected }) {
   if (isSchool) {
     return null;
   }
+
   return (
-    <form onSubmit={handleSubmit(onSubmit)}>
-      <div className="form-control">
-        <label>Student Number</label>
+    <form onSubmit = {handleSubmit(onSubmit)}>
+      <div className = "form-control">
+        <label>Enter total number of students: </label>
           <input
           type="number"
           name="studentNumber"
           ref={register}/>
+          <button type="submit">OK</button>
       </div>
       <div className="form-control">
-      <label></label>
-      <button type="submit">OK</button>
       </div>
     </form>
   );
@@ -353,12 +338,14 @@ function BusNumberForm() {
       <form onSubmit={handleSubmit(onSubmit)}>
         <div className="form-control">
         <label>Enter the maximum number of buses: </label>
+          <button className="button-right" type="submit"> OK </button>
+
           <input
+            className="button-right"
             type="number" // sadece sayı değeri girilebilmesi için böyle bir şey ekledim
             name="busNumber"
             ref={register}
           />
-          <button type="submit"> OK </button>
         </div>
       </form>
    </div>
@@ -378,12 +365,13 @@ function BusCapacityForm() {
       <form onSubmit={handleSubmit(onSubmit)}>
         <div className="form-control">
         <label>Enter the student capacity of buses: </label>
+        <button className="button-right" type="submit"> OK </button>
           <input
+            className="button-right"
             type="number" // sadece sayı değeri girilebilmesi için böyle bir şey ekledim
             name="busCapacity"
             ref={register}
           />
-          <button type="submit"> OK </button>
         </div>
       </form>
    </div>
@@ -402,13 +390,14 @@ function OptimalityForm() {
     <div> 
     <form onSubmit={handleSubmit(onSubmit)}>
       <div className="form-control">
-      <label>Enter the optimality level (Note: This may affect the calculation time!): </label>
+      <label>Enter the optimality level (Note: This may affect the calculation time!) : </label>
+        <button className="button-right" type="submit"> OK </button>
         <input
+          className="button-right"
           type="number"
           name="optimalityDegree"
           ref={register}
         />
-        <button type="submit"> OK </button>
       </div>
     </form>
     </div>
@@ -490,14 +479,13 @@ function Search({ panTo }) {
 }
 
 function initMap(finalRoutes, map) {
- 
-  console.log(colorValues)
-  let colorIndex=Math.round(Math.random()*colorValues.length);  //random sayı alıp ona göre renk seçiyorum içerde de kontrol ediyorum aynı olmasın hiçbiri diye
-  let indices=[finalRoutes.length]
-  var i=0
+  // console.log(colorValues)
+  let colorIndex = Math.round(Math.random() * colorValues.length);  //random sayı alıp ona göre renk seçiyorum içerde de kontrol ediyorum aynı olmasın hiçbiri diye
+  let indices = [finalRoutes.length]
+  var i = 0
   finalRoutes.forEach(route => {
-    indices[i]=colorIndex
-    console.log(colorIndex,colorValues[colorIndex])
+    indices[i] = colorIndex
+    // console.log(colorIndex,colorValues[colorIndex])
     const mapRoute = new window.google.maps.Polyline({
       path: route.busStops,
       geodesic: true,
@@ -506,9 +494,10 @@ function initMap(finalRoutes, map) {
       strokeWeight: 4,
     });
     mapRoute.setMap(map);
-    colorIndex=Math.round(Math.random()*colorValues.length);
-    while(indices.includes(colorIndex)){
-      colorIndex=Math.round(Math.random()*colorValues.length);
+
+    colorIndex = Math.round(Math.random() * colorValues.length);
+    while (indices.includes(colorIndex)) {
+      colorIndex = Math.round(Math.random() * colorValues.length);
     }
   });
 }
