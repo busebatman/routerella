@@ -71,7 +71,8 @@ export default function App() {
   const onMapClick = React.useCallback((e) => {
     //okul sildikten sonra ilk eklenecek durak için kaldığı yerden devam etsin diye 
     if(parseInt(localStorage.getItem('lastBusStopCount'))!==0 && parseInt(localStorage.getItem('busStopCount'))!==0){
-      localStorage.setItem('busStopCount', parseInt(localStorage.getItem('lastBusStopCount'), 10)); //kalınan durağı asıl counta verip kalınanı 0lıyor      localStorage.setItem('lastBusStopCount', 0); 
+      localStorage.setItem('busStopCount', parseInt(localStorage.getItem('lastBusStopCount'), 10)+1); //kalınan durağı asıl counta verip kalınanı 0lıyor      
+      localStorage.setItem('lastBusStopCount', 0); 
     }
     else{ //normal case
       localStorage.setItem('busStopCount', parseInt(localStorage.getItem('busStopCount'), 10) + 1); // her durak eklemesinde 1 artırıyorum
@@ -278,9 +279,11 @@ function DeleteMarker({selected, markers}){
         }
       }
       else{ //okul ise last count atıyorum asıl count 0lıyorum ilk eklenen okul olsun sonra devam etsin diye
-        localStorage.setItem('lastBusStopCount', parseInt(localStorage.getItem('busStopCount'), 10)); // her durak eklemesinde 1 artırıyorum
-        localStorage.setItem('busStopCount', 0); // her durak eklemesinde 1 artırıyorum
+        if(parseInt(localStorage.getItem('busStopCount'),10)!==1){
+          localStorage.setItem('lastBusStopCount', parseInt(localStorage.getItem('busStopCount'), 10)); // en son kaldığım numarayı kaydediyorum
 
+        }
+        localStorage.setItem('busStopCount', 0); // okul eklemesi için 0lıyorum
       }
 
       //splice methodu tüm markerlar içinde verilen ilk parametre indexinden başlayıp ikinci parametre kadar marker siliyor
