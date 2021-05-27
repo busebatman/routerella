@@ -114,8 +114,8 @@ export default function App() {
     markers.forEach(m => {
       stopsArr[index++] = [
         (m.num - 1),
-        (m.lat.toFixed(2) * 100),
-        (m.lng.toFixed(2) * 100),
+        parseInt((m.lat * 100).toFixed(2),10), //dosyadan alınca floating point hatalı gibi bir şey oldu onu düzeltmek için biraz formatladım
+        parseInt((m.lng * 100).toFixed(2),10),
         m.studentNum,
       ];
     });
@@ -150,7 +150,8 @@ export default function App() {
     <div>
       {/* // bu şekilde fonksiyon çağırmış oluyorum. daha temiz görünüyor */}
       <Routerella/>
-
+      {/*Ayrı fonksiyon olarak yaptım bunu da markerlar için setmarkerı gönderdim okula zoomlamak içinde panto yu */}
+      <UploadFile setMarkers={setMarkers} panTo={panTo}/>
       <GoogleMap id="map" mapContainerStyle={mapContainerStyle} zoom={8} center={center} options={options} onClick={onMapClick} onLoad={onMapLoad}>
         <h1>Add School and Bus Stops <img src = { school } alt = "school" height = { 30 } width = { 50 } /></h1>
         <Locate panTo={panTo} />
@@ -219,6 +220,69 @@ function Routerella() {
         width = { 300 } />
     </div>
   );
+}
+
+//file upload fonksiyonu
+function UploadFile({setMarkers,panTo}){
+
+  //dosyadan değerleri alıp diğer methodlarda düzelttikten sonra zoomlayıp yerleştirmek için
+  //şimdilik önceki formatımız öyleydi diye koordinatları 1234 gibi alıp sonra 12.34e çevirdim formatı değiştirip burda da güncelleyebiliriz zsonra
+  const uploadClick = (coordArray) =>{
+    panTo({
+      lat: parseInt((coordArray[0][1]/100.0).toFixed(2)),
+      lng: parseInt((coordArray[0][2]/100.0).toFixed(2)),
+      zoomValue: 5});
+    coordArray.forEach(stop => {
+    setMarkers((current) =>[
+        ...current,
+        {
+          num: parseInt(stop[0])+1,
+          lat: (parseInt(stop[1])/100.0),
+          lng: (parseInt(stop[2])/100.0),
+          studentNum: parseInt(stop[0])===0 ? 0 : parseInt(stop[3]),
+        },
+      ]);
+    });
+    
+  };
+//file operasyonları
+  let fileReader;
+  //ilk okuma methodu okuyup handle methoduna gönderiyor
+  const onChange = e => {
+    let file = e.target.files;
+    fileReader = new FileReader();
+    fileReader.onloadend = handleFileRead;
+    fileReader.readAsText(file[0]);
+  };
+
+  //istenilen formata çevirmek için clean content methodunu çağırıyor sonrada upload methodunu çağırıyor yerleştirme için
+  const handleFileRead = e => {
+    let content = fileReader.result;
+    content = cleanContent(content);
+    uploadClick(content)
+  };
+
+  //string olarak aldığını önce arraye çeviriyor sonra da her durak için string ile tutulan değerleri 
+  //(num,lat,lng,students) arraylere çevirip 2d array yapıp return ediyor
+  const cleanContent = string => {
+    string = string.replace(/^\s*[\r\n]/gm, "");
+    let array = string.split(new RegExp(/[\r\n]/gm));
+    let newArray=Array(array.length).fill(0).map(row => new Array(4).fill(0))
+    let index=0
+    array.forEach(stop => {
+      stop=stop.split(' ')
+      newArray[index]=stop
+      index++
+    });
+    return newArray
+  };
+
+//stil çok kötü farkındayım :D şimdilik eklenebiliyor mu çalışıyor mu diye denedim değiştiririz 
+  return(
+    <div>
+        <input type="file" name="myfile" onChange={onChange} />
+      </div>
+  )
 }
 
 // bu fonksiyon üzerinde bastığımızda çıkan bilgi ekranı için. okulsa okul yazsın, duraksa durak diye 
