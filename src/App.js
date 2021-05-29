@@ -153,7 +153,7 @@ export default function App() {
       {/*Ayrı fonksiyon olarak yaptım bunu da markerlar için setmarkerı gönderdim okula zoomlamak içinde panto yu */}
       <UploadFile setMarkers={setMarkers} panTo={panTo}/>
       <GoogleMap id="map" mapContainerStyle={mapContainerStyle} zoom={8} center={center} options={options} onClick={onMapClick} onLoad={onMapLoad}>
-        <h1>Add School and Bus Stops <img src = { school } alt = "school" height = { 30 } width = { 50 } /></h1>
+        <h1>Map <img src = { school } alt = "school" height = { 30 } width = { 50 } /></h1>
         <Locate panTo={panTo} />
         <Search panTo={panTo} />
         {markers.map((marker) => (
@@ -201,7 +201,7 @@ export default function App() {
 
       <BusCapacityForm/>
 
-      <OptimalityForm/>
+      {/* <OptimalityForm/> */}
       <p></p>
       <center> <button className="button" onClick = {handleClick}> RUN! </button> </center>
     </div>
@@ -280,8 +280,9 @@ function UploadFile({setMarkers,panTo}){
 //stil çok kötü farkındayım :D şimdilik eklenebiliyor mu çalışıyor mu diye denedim değiştiririz 
   return(
     <div>
-        <input type="file" name="myfile" onChange={onChange} />
-      </div>
+      <label>You can add school and bus stops by choosing from the map or uploading the coordination file : </label>
+      <input className="button-right-2" type="file" name="myfile" onChange={onChange} />
+    </div>
   )
 }
 
@@ -443,30 +444,30 @@ function BusCapacityForm() {
 }
 
 // bu da optimallik seviyesi için. bunu aslında 0'dan başlayıp yukarı çıkan şekilde değilde 3 farklı kutucuk gibi olsa daha iyi olur gibi sanki
-function OptimalityForm() {
-  const { register, handleSubmit } = useForm();
+// function OptimalityForm() {
+//   const { register, handleSubmit } = useForm();
 
-  const onSubmit = (data) => {
-    localStorage.setItem('optimalityDegree', data.optimalityDegree);
-  };
+//   const onSubmit = (data) => {
+//     localStorage.setItem('optimalityDegree', data.optimalityDegree);
+//   };
 
-  return (
-    <div> 
-    <form onSubmit={handleSubmit(onSubmit)}>
-      <div className="form-control">
-      <label>Enter the optimality level (Note: This may affect the calculation time!) : </label>
-        <button className="button-right" type="submit"> OK </button>
-        <input
-          className="button-right"
-          type="number"
-          name="optimalityDegree"
-          ref={register}
-        />
-      </div>
-    </form>
-    </div>
-  );
-}
+//   return (
+//     <div> 
+//     <form onSubmit={handleSubmit(onSubmit)}>
+//       <div className="form-control">
+//       <label>Enter the optimality level (Note: This may affect the calculation time!) : </label>
+//         <button className="button-right" type="submit"> OK </button>
+//         <input
+//           className="button-right"
+//           type="number"
+//           name="optimalityDegree"
+//           ref={register}
+//         />
+//       </div>
+//     </form>
+//     </div>
+//   );
+// }
 
 function Locate({ panTo }) {
   return (

@@ -295,13 +295,13 @@ def addStopstoBusRandom(Individual, buses_random_array, extracted_stop_list):
             extracted_stop_list.remove(ext_stop)                   
             return True
                                 
-def addExtraStopsRandom(Individual, buses_random_array, extracted_stop_list, bus_limit, busCapacity):
+def addExtraStopsRandom(Individual, buses_random_array, extracted_stop_list, bus_limit, busCapacity, school):
     while extracted_stop_list:	
         is_add_existed_bus = False
         if buses_random_array:	
             is_add_existed_bus = addStopstoBusRandom(Individual, buses_random_array, extracted_stop_list)         
         if(not is_add_existed_bus):
-            addNewBus(Individual, extracted_stop_list, bus_limit, buses_random_array, busCapacity)
+            addNewBus(Individual, extracted_stop_list, bus_limit, buses_random_array, busCapacity, school)
             
 def repairRandom(Individual, school, bus_limit, busCapacity):
     buses_random_array = []
@@ -319,7 +319,7 @@ def repairRandom(Individual, school, bus_limit, busCapacity):
     #if there is no capacity exceed exit function
     if (len(extracted_stop_list) == 0):
         return 1     
-    addExtraStopsRandom(Individual, buses_random_array, extracted_stop_list, bus_limit, busCapacity) 
+    addExtraStopsRandom(Individual, buses_random_array, extracted_stop_list, bus_limit, busCapacity, school) 
     return Individual   
 
 def repairPop(population, school, option, busCapacity, bus_limit):	
@@ -580,8 +580,6 @@ def lambda_handler(event, context):
     optimalityDegree = body['optimalityDegree']
     locations = body['locations']
     
-    #stops = locations
-    
     stops = []
     for stop in locations:
         if int(stop[0]) == 0:
@@ -603,11 +601,11 @@ def lambda_handler(event, context):
     popSize = 10
     eliteSize = 1
     mutationRate = 0.5 / len(stops)
-    mutation_op = 0
+    mutation_op = 2
     generations = 100
     k = 1
-    repairOption = 0
-    crossoverRate = 0.5
+    repairOption = 1
+    crossoverRate = 0.8
     
     school = stops[0]
     stops.remove(school)
