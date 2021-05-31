@@ -98,9 +98,12 @@ export default function App() {
     mapRef.current = map;
   }, []);
 
-  const panTo = React.useCallback(({ lat, lng }) => {
+  const panTo = React.useCallback(({ lat, lng, zoomValue }) => {
     mapRef.current.panTo({ lat, lng });
-    mapRef.current.setZoom(20);
+    if (!zoomValue){
+        zoomValue=20
+    }
+    mapRef.current.setZoom(zoomValue);
   }, []);
 
   if (loadError) return "Error";
