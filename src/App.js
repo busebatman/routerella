@@ -152,6 +152,7 @@ export default function App() {
       <Routerella/>
       {/*Ayrı fonksiyon olarak yaptım bunu da markerlar için setmarkerı gönderdim okula zoomlamak içinde panto yu */}
       <UploadFile setMarkers={setMarkers} panTo={panTo}/>
+      <ClearStops markers={markers} onMapLoad={onMapLoad}/>
       <GoogleMap id="map" mapContainerStyle={mapContainerStyle} zoom={8} center={center} options={options} onClick={onMapClick} onLoad={onMapLoad}>
         <h1>Map <img src = { school } alt = "school" height = { 30 } width = { 50 } /></h1>
         <Locate panTo={panTo} />
@@ -207,7 +208,7 @@ export default function App() {
     </div>
   );
 }
-
+let lines;
 // bu fonksiyon sadece logo için. logo çok küçük biliyorum :D 
 // büyütünce piksel piksel oluyo ama çok hoşuma gitti ya :D zorunlu değil tabii ki böyle olması :D
 function Routerella() {
@@ -221,7 +222,22 @@ function Routerella() {
     </div>
   );
 }
+function ClearStops({markers,onMapLoad}){
 
+  const handleDeleteAll = () =>{
+      markers.splice(0,markers.length)
+      localStorage.setItem('busStopCount',0)
+      lines.forEach(line=>{
+        line.setMap(null)
+      })
+  }
+
+  return(
+    <div>
+      <button onClick = {handleDeleteAll}> CLEAR ALL! </button>
+    </div>
+  )
+}
 //file upload fonksiyonu
 function UploadFile({setMarkers,panTo}){
 
@@ -548,6 +564,7 @@ function initMap(finalRoutes, map) {
   let colorIndex = Math.round(Math.random() * colorValues.length);  //random sayı alıp ona göre renk seçiyorum içerde de kontrol ediyorum aynı olmasın hiçbiri diye
   let indices = [finalRoutes.length]
   var i = 0
+  lines=[finalRoutes.length];
   finalRoutes.forEach(route => {
     indices[i] = colorIndex
     // console.log(colorIndex,colorValues[colorIndex])
@@ -558,11 +575,13 @@ function initMap(finalRoutes, map) {
       strokeOpacity: 5.0,
       strokeWeight: 4,
     });
+    lines[i]=mapRoute;
     mapRoute.setMap(map);
 
     colorIndex = Math.round(Math.random() * colorValues.length);
     while (indices.includes(colorIndex)) {
       colorIndex = Math.round(Math.random() * colorValues.length);
     }
+    i++;
   });
 }
