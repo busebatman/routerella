@@ -249,6 +249,7 @@ function UploadFile({setMarkers,panTo}){
       lng: parseInt((coordArray[0][2]/100.0).toFixed(2)),
       zoomValue: 5});
     coordArray.forEach(stop => {
+          localStorage.setItem('busStopCount', parseInt(localStorage.getItem('busStopCount'), 10) + 1);
     setMarkers((current) =>[
         ...current,
         {
@@ -269,6 +270,7 @@ function UploadFile({setMarkers,panTo}){
     fileReader = new FileReader();
     fileReader.onloadend = handleFileRead;
     fileReader.readAsText(file[0]);
+    e.target.value = null;
   };
 
   //istenilen formata çevirmek için clean content methodunu çağırıyor sonrada upload methodunu çağırıyor yerleştirme için
