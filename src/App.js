@@ -117,8 +117,8 @@ export default function App() {
     markers.forEach(m => {
       stopsArr[index++] = [
         (m.num - 1),
-        parseInt((m.lat * 100).toFixed(2),10), //dosyadan alınca floating point hatalı gibi bir şey oldu onu düzeltmek için biraz formatladım
-        parseInt((m.lng * 100).toFixed(2),10),
+        parseInt((m.lat * 10000).toFixed(4),10), //dosyadan alınca floating point hatalı gibi bir şey oldu onu düzeltmek için biraz formatladım
+        parseInt((m.lng * 10000).toFixed(4),10),
         m.studentNum,
       ];
     });
@@ -141,6 +141,7 @@ export default function App() {
       .post(api, request)
       .then((response) => {
         finalRoutes = response.data;
+        console.log(response.data)
         // console.log(finalRoutes);
         initMap(finalRoutes, mapRef.current);
       })
@@ -248,8 +249,8 @@ function UploadFile({setMarkers,panTo}){
   //şimdilik önceki formatımız öyleydi diye koordinatları 1234 gibi alıp sonra 12.34e çevirdim formatı değiştirip burda da güncelleyebiliriz zsonra
   const uploadClick = (coordArray) =>{
     panTo({
-      lat: parseInt((coordArray[0][1]/100.0).toFixed(2)),
-      lng: parseInt((coordArray[0][2]/100.0).toFixed(2)),
+      lat: parseInt((coordArray[0][1]/10000.0).toFixed(4)),
+      lng: parseInt((coordArray[0][2]/10000.0).toFixed(4)),
       zoomValue: 5});
     coordArray.forEach(stop => {
           localStorage.setItem('busStopCount', parseInt(localStorage.getItem('busStopCount'), 10) + 1);
@@ -257,8 +258,8 @@ function UploadFile({setMarkers,panTo}){
         ...current,
         {
           num: parseInt(stop[0])+1,
-          lat: (parseInt(stop[1])/100.0),
-          lng: (parseInt(stop[2])/100.0),
+          lat: (parseInt(stop[1])/10000.0),
+          lng: (parseInt(stop[2])/10000.0),
           studentNum: parseInt(stop[0])===0 ? 0 : parseInt(stop[3]),
         },
       ]);
@@ -571,6 +572,7 @@ function initMap(finalRoutes, map) {
   var i = 0
   lines=[finalRoutes.length];
   finalRoutes.forEach(route => {
+    console.log(route.busStops)
     indices[i] = colorIndex
     // console.log(colorIndex,colorValues[colorIndex])
     const mapRoute = new window.google.maps.Polyline({
@@ -580,6 +582,7 @@ function initMap(finalRoutes, map) {
       strokeOpacity: 5.0,
       strokeWeight: 4,
     });
+    console.log(mapRoute)
     lines[i]=mapRoute;
     mapRoute.setMap(map);
 
